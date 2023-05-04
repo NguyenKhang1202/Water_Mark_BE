@@ -5,12 +5,23 @@ const {
   encryptedData,
   decryptedData,
 } = require("../utils/genRSA");
+const watermark = require("jimp-watermark");
 const { hashPassword } = require("../utils/hashPassword");
 const { getUserDb, createUserDb } = require("../db/user.db");
 const apiResponse = require("../utils/apiResponse");
 const APIStatus = require("../constants/APIStatus");
-
 const route = (app) => {
+  const fileNames = [
+    "image_1.jpg",
+    "image_2.jpg",
+    "image_3.jpg",
+    "image_4.jpg",
+    "image_5.jpg",
+    "image_6.jpg",
+    "image_7.jpg",
+    "image_8.jpg",
+    "image_9.jpg",
+  ];
   // /
   app.post("/", async (req, res) => {
     try {
@@ -24,17 +35,34 @@ const route = (app) => {
           })
         );
       }
-      let listEncrypt = [];
-      for (let i = 0; i < 6; i++) {
-        listEncrypt.push(
-          encryptedData(user.password, publicKey).toString("base64")
-        );
-      }
+
+      // create hash RSA
+      var textPass;
+      fileNames.forEach(async (fileName) => {
+        if (
+          fileName == "image_7.jpg" ||
+          fileName == "image_8.jpg" ||
+          fileName == "image_9.jpg"
+        ) {
+          textPass = encryptedData(
+            Math.random().toString(36).substring(2, 7),
+            publicKey
+          ).toString("base64");
+        } else {
+          textPass = encryptedData(user.password, publicKey).toString("base64");
+        }
+        // embed
+        await watermark.addTextWatermark(`./src/images/${fileName}`, {
+          text: textPass,
+          textSize: 1, //Should be between 1-8
+          dstPath: `./src/images/public/${fileName}`,
+        });
+      });
       return res.status(200).json(
         apiResponse({
           status: APIStatus.SUCCESS,
-          msg: "List of encrypt password",
-          data: listEncrypt,
+          msg: "Success",
+          data: "",
         })
       );
     } catch (err) {
