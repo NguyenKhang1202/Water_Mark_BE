@@ -9,12 +9,31 @@ const getUserDb = async (query) => {
 
 // Create user
 const createUserDb = async (query) => {
-  const user = await new User(query).save();
+  try {
+    const user = await new User(query).save();
+    return user;
+  } catch (error) {
+    console.error("createUserDb: " + error);
+  }
+};
 
-  return user;
+// Edit info
+const editUserDb = async (query) => {
+  try {
+    const { _id, listTextRandom } = query;
+    const userForEdit = await getUserDb({ _id });
+
+    userForEdit.listTextRandoms = listTextRandom;
+
+    const rs = await userForEdit.save();
+    return rs;
+  } catch (error) {
+    console.error("editUserDb: " + error);
+  }
 };
 
 module.exports = {
   getUserDb,
   createUserDb,
+  editUserDb,
 };

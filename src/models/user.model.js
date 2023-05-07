@@ -11,11 +11,19 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
     },
     fullName: {
       type: String,
       required: true,
+    },
+    listTextRandoms: {
+      type: Array,
+      required: false,
+    },
+    listUrlImages: {
+      type: Array,
+      required: false,
     },
   },
   {

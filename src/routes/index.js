@@ -6,8 +6,7 @@ const {
   decryptedData,
 } = require("../utils/genRSA");
 const watermark = require("jimp-watermark");
-const { hashPassword } = require("../utils/hashPassword");
-const { getUserDb, createUserDb } = require("../db/user.db");
+const { getUserDb, createUserDb, editUserDb } = require("../db/user.db");
 const apiResponse = require("../utils/apiResponse");
 const APIStatus = require("../constants/APIStatus");
 const route = (app) => {
@@ -22,7 +21,7 @@ const route = (app) => {
     "image_8.jpg",
     "image_9.jpg",
   ];
-  // /
+  // Client nhập username và gửi cho server
   app.post("/", async (req, res) => {
     try {
       const { username } = req.body;
@@ -36,35 +35,42 @@ const route = (app) => {
         );
       }
 
-      // create hash RSA
-      var textPass;
-      fileNames.forEach(async (fileName) => {
-        if (
-          fileName == "image_7.jpg" ||
-          fileName == "image_8.jpg" ||
-          fileName == "image_9.jpg"
-        ) {
-          textPass = encryptedData(
-            Math.random().toString(36).substring(2, 7),
-            publicKey
-          ).toString("base64");
-        } else {
-          textPass = encryptedData(user.password, publicKey).toString("base64");
-        }
-        // embed
-        await watermark.addTextWatermark(`./src/images/${fileName}`, {
-          text: textPass,
-          textSize: 1, //Should be between 1-8
-          dstPath: `./src/images/public/${fileName}`,
-        });
+      // Tạo text random và lưu vào db
+      let listTextRandom = [];
+      for (let i = 0; i <= 5; i++) {
+        listTextRandom[i] = Math.random().toString(36).substring(2, 7);
+      }
+      await editUserDb({
+        _id: user._id,
+        listTextRandom: listTextRandom,
       });
+
+      // RSA textrandom và gửi về cho client
+      let listTextRandomRSA = [];
+      for (let i = 0; i <= 5; i++) {
+        listTextRandomRSA[i] = encryptedData(
+          listTextRandom[i],
+          publicKey
+        ).toString("base64");
+      }
+
+      // Lấy 6 url và 6 text gửi về client
       return res.status(200).json(
         apiResponse({
           status: APIStatus.SUCCESS,
           msg: "Success",
-          data: "",
+          data: {
+            listTextRandomRSA: listTextRandomRSA,
+            listUrlImages: user.listUrlImages,
+          },
         })
       );
+      // // embed
+      // await watermark.addTextWatermark(`./src/images/${fileName}`, {
+      //   text: textPass,
+      //   textSize: 1, //Should be between 1-8
+      //   dstPath: `./src/images/public/${fileName}`,
+      // });
     } catch (err) {
       console.log(err);
     }
@@ -73,23 +79,32 @@ const route = (app) => {
   // login
   app.post("/login", async (req, res, next) => {
     try {
-      const { username, password } = req.body;
+      const { username, listTextRandomRSA } = req.body;
       const user = await getUserDb({ username });
-      const passwordDb = user.password;
-      let listDecryptPassword = [];
-      for (let i = 0; i < password.length; i++) {
-        listDecryptPassword.push(
+      if (!user) {
+        return res.status(404).json(
+          apiResponse({
+            status: APIStatus.FAIL,
+            msg: "Username not found",
+          })
+        );
+      }
+      let listDecryptTextRandom = [];
+      for (let i = 0; i < 6; i++) {
+        listDecryptTextRandom.push(
           decryptedData(
-            Buffer.from(password[i], "base64"),
+            Buffer.from(listTextRandomRSA[i], "base64"),
             privateKey
           ).toString()
         );
       }
       let count = 0;
-      listDecryptPassword.forEach((i) => {
-        if (i == passwordDb) {
-          count++;
-        }
+      let listTextRandom = user.listTextRandoms;
+      console.log(listTextRandom);
+      listTextRandom.forEach((i) => {
+        listDecryptTextRandom.forEach((j) => {
+          if (i == j) count++;
+        });
       });
       if (count == 6)
         return res.status(200).json(
@@ -119,28 +134,32 @@ const route = (app) => {
 
   // register
   app.post("/register", async (req, res, next) => {
-    const { username, password, fullName } = req.body;
+    const { username, fullName, listUrlImages } = req.body;
     const [user1, user2] = await Promise.all([getUserDb({ username })]);
     if (user1 || user2) {
       return res.status(409).json(
         apiResponse({
           status: APIStatus.FAIL,
-          msg: "username existed",
+          msg: "Username existed",
         })
       );
     }
 
-    const hashedPw = await hashPassword(password);
+    let listTextRandom = [];
+    for (let i = 0; i <= 5; i++) {
+      listTextRandom[i] = Math.random().toString(36).substring(2, 7);
+    }
     const user = await createUserDb({
       username,
-      password: hashedPw,
       fullName,
+      listUrlImages,
+      listTextRandoms: listTextRandom,
     });
     if (!user)
       return res.status(400).json(
         apiResponse({
           status: APIStatus.ERROR,
-          msg: "can not create new user",
+          msg: "Can not create new user",
         })
       );
 
