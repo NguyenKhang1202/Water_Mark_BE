@@ -5,10 +5,10 @@ const {
   encryptedData,
   decryptedData,
 } = require("../utils/genRSA");
-const watermark = require("jimp-watermark");
 const { getUserDb, createUserDb, editUserDb } = require("../db/user.db");
 const apiResponse = require("../utils/apiResponse");
 const APIStatus = require("../constants/APIStatus");
+const { waterMark, deWaterMark } = require("../utils/water.mark");
 const route = (app) => {
   const fileNames = [
     "image_1.jpg",
@@ -54,6 +54,9 @@ const route = (app) => {
         ).toString("base64");
       }
 
+      //await waterMark("image_1.jpg", "hello_world");
+      // let stringRandom = await deWaterMark("image_1.jpg");
+      // console.log(stringRandom);
       // Lấy 6 url và 6 text gửi về client
       return res.status(200).json(
         apiResponse({
@@ -65,12 +68,6 @@ const route = (app) => {
           },
         })
       );
-      // // embed
-      // await watermark.addTextWatermark(`./src/images/${fileName}`, {
-      //   text: textPass,
-      //   textSize: 1, //Should be between 1-8
-      //   dstPath: `./src/images/public/${fileName}`,
-      // });
     } catch (err) {
       console.log(err);
     }
@@ -134,7 +131,7 @@ const route = (app) => {
 
   // register
   app.post("/register", async (req, res, next) => {
-    const { username, fullName, listUrlImages } = req.body;
+    const { username, listUrlImage } = req.body;
     const [user1, user2] = await Promise.all([getUserDb({ username })]);
     if (user1 || user2) {
       return res.status(409).json(
@@ -149,10 +146,10 @@ const route = (app) => {
     for (let i = 0; i <= 5; i++) {
       listTextRandom[i] = Math.random().toString(36).substring(2, 7);
     }
+    console.log(listUrlImage);
     const user = await createUserDb({
       username,
-      fullName,
-      listUrlImages,
+      listUrlImages: listUrlImage,
       listTextRandoms: listTextRandom,
     });
     if (!user)

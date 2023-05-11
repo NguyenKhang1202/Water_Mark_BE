@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     },
     fullName: {
       type: String,
-      required: true,
+      required: false,
     },
     listTextRandoms: {
       type: Array,
