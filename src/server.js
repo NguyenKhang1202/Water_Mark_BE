@@ -30,7 +30,7 @@ app.use(cors());
 // Route middleware
 route(app);
 
-sendFile(app, options);
+//sendFile(app, options);
 
 // Handle exception
 app.use((err, req, res, next) => {

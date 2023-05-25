@@ -9,25 +9,16 @@ function stringToBinary(str) {
   return result;
 }
 
-// Function to convert binary to string
-function binaryToString(binary) {
-  let result = "";
-  for (let i = 0; i < binary.length; i += 8) {
-    result += String.fromCharCode(parseInt(binary.substr(i, 8), 2));
-  }
-  return result;
-}
-
 // Function to embed message in LSB of image pixels
 function embedMessage(image, message) {
   // Convert message to binary
   const binaryMessage = stringToBinary(message);
-
   // Embed message in LSB of image pixels
   let binaryIndex = 0;
   for (let y = 0; y < image.bitmap.height; y++) {
     for (let x = 0; x < image.bitmap.width; x++) {
       let pixel = Jimp.intToRGBA(image.getPixelColor(x, y));
+      //console.log("Original Pixel tại :", pixel);
       let binaryPixel = [
         pixel.r.toString(2).padStart(8, "0"),
         pixel.g.toString(2).padStart(8, "0"),
@@ -49,60 +40,26 @@ function embedMessage(image, message) {
         pixel.a
       );
       image.setPixelColor(newPixel, x, y);
+      let modifiedPixel = Jimp.intToRGBA(image.getPixelColor(x, y));
     }
+
     if (binaryIndex >= binaryMessage.length) {
       break;
     }
   }
 }
 
-// Function to extract message from LSB of image pixels
-function extractMessage(image) {
-  // Extract message from LSB of image pixels
-  let binaryMessage = "";
-  for (let y = 0; y < image.bitmap.height; y++) {
-    for (let x = 0; x < image.bitmap.width; x++) {
-      let pixel = Jimp.intToRGBA(image.getPixelColor(x, y));
-      let binaryPixel = [
-        pixel.r.toString(2).padStart(8, "0"),
-        pixel.g.toString(2).padStart(8, "0"),
-        pixel.b.toString(2).padStart(8, "0"),
-      ];
-      for (let i = 0; i < 3; i++) {
-        binaryMessage += binaryPixel[i][7];
-      }
-    }
-  }
-  // Convert binary message to string
-  let stringRandom = binaryToString(binaryMessage);
-  return stringRandom;
-}
-
 // Load image using Jimp
 const waterMark = async (imageName, textRandom) => {
-  await Jimp.read(`src/images/${imageName}`)
-    .then((image) => {
-      // Embed message in image
-      embedMessage(image, textRandom);
-      // Save modified image
-      image.write(`src/images/public/${imageName}`);
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+  try {
+    const image = await Jimp.read(`src/images/${imageName}`);
+    // Nhúng tin nhắn vào hình ảnh
+    embedMessage(image, textRandom);
+    // Lưu hình ảnh đã được thủy vân vào thư mục public
+    await image.writeAsync(`src/images/public/${imageName}`);
+  } catch (err) {
+    console.error(err);
+  }
 };
 
-// Extract message from image
-const deWaterMark = async (imageName) => {
-  const stringRandom = await Jimp.read(`src/images/public/${imageName}`)
-    .then((image) => {
-      const textRandom = extractMessage(image);
-      return textRandom;
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-  return stringRandom;
-};
-
-module.exports = { waterMark, deWaterMark };
+module.exports = { waterMark };

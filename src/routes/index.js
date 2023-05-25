@@ -11,12 +11,12 @@ const APIStatus = require("../constants/APIStatus");
 const { waterMark, deWaterMark } = require("../utils/water.mark");
 const route = (app) => {
   const fileNames = [
-    "image_1.jpg",
-    "image_2.jpg",
-    "image_3.jpg",
-    "image_4.jpg",
-    "image_5.jpg",
-    "image_6.jpg",
+    "image_1.png",
+    "image_2.png",
+    "image_3.png",
+    "image_4.png",
+    "image_5.png",
+    "image_6.png",
     "image_7.jpg",
     "image_8.jpg",
     "image_9.jpg",
@@ -38,7 +38,7 @@ const route = (app) => {
       // Tạo text random và lưu vào db
       let listTextRandom = [];
       for (let i = 0; i <= 5; i++) {
-        listTextRandom[i] = Math.random().toString(36).substring(2, 7);
+        listTextRandom[i] = Math.random().toString(36).substring(2, 8);
       }
       await editUserDb({
         _id: user._id,
@@ -53,8 +53,10 @@ const route = (app) => {
           publicKey
         ).toString("base64");
       }
-
-      //await waterMark("image_1.jpg", "hello_world");
+      let listImages = user.listUrlImages;
+      for (let i = 0; i <= 5; i++) {
+        await waterMark(listImages[i], listTextRandomRSA[i]);
+      }
       // let stringRandom = await deWaterMark("image_1.jpg");
       // console.log(stringRandom);
       // Lấy 6 url và 6 text gửi về client
@@ -131,40 +133,44 @@ const route = (app) => {
 
   // register
   app.post("/register", async (req, res, next) => {
-    const { username, listUrlImage } = req.body;
-    const [user1, user2] = await Promise.all([getUserDb({ username })]);
-    if (user1 || user2) {
-      return res.status(409).json(
-        apiResponse({
-          status: APIStatus.FAIL,
-          msg: "Username existed",
-        })
-      );
-    }
+    try {
+      const { username, listUrlImage } = req.body;
+      const [user1, user2] = await Promise.all([getUserDb({ username })]);
+      if (user1 || user2) {
+        return res.status(409).json(
+          apiResponse({
+            status: APIStatus.FAIL,
+            msg: "Username existed",
+          })
+        );
+      }
 
-    let listTextRandom = [];
-    for (let i = 0; i <= 5; i++) {
-      listTextRandom[i] = Math.random().toString(36).substring(2, 7);
-    }
-    console.log(listUrlImage);
-    const user = await createUserDb({
-      username,
-      listUrlImages: listUrlImage,
-      listTextRandoms: listTextRandom,
-    });
-    if (!user)
-      return res.status(400).json(
-        apiResponse({
-          status: APIStatus.ERROR,
-          msg: "Can not create new user",
-        })
-      );
+      let listTextRandom = [];
+      for (let i = 0; i <= 5; i++) {
+        listTextRandom[i] = Math.random().toString(36).substring(2, 8);
+      }
+      console.log(listUrlImage);
+      const user = await createUserDb({
+        username,
+        listUrlImages: listUrlImage,
+        listTextRandoms: listTextRandom,
+      });
+      if (!user)
+        return res.status(400).json(
+          apiResponse({
+            status: APIStatus.ERROR,
+            msg: "Can not create new user",
+          })
+        );
 
-    return res
-      .status(200)
-      .json(
-        apiResponse({ status: APIStatus.SUCCESS, msg: "Register success" })
-      );
+      return res
+        .status(200)
+        .json(
+          apiResponse({ status: APIStatus.SUCCESS, msg: "Register success" })
+        );
+    } catch (err) {
+      console.error(err);
+    }
   });
 };
 
