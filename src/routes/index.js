@@ -8,18 +8,19 @@ const {
 const { getUserDb, createUserDb, editUserDb } = require("../db/user.db");
 const apiResponse = require("../utils/apiResponse");
 const APIStatus = require("../constants/APIStatus");
-const { waterMark} = require("../utils/water.mark");
+const { waterMark } = require("../utils/water.mark");
+const { generateRandomString } = require("../utils/genRandomText");
 const route = (app) => {
   const fileNames = [
-    "image_1.png",
-    "image_2.png",
-    "image_3.png",
-    "image_4.png",
-    "image_5.png",
-    "image_6.png",
-    "image_7.png",
-    "image_8.png",
-    "image_9.png",
+    "image_01.png",
+    "image_02.png",
+    "image_03.png",
+    "image_04.png",
+    "image_05.png",
+    "image_06.png",
+    "image_07.png",
+    "image_08.png",
+    "image_09.png",
     "image_10.png",
     "image_11.png",
     "image_12.png",
@@ -47,7 +48,7 @@ const route = (app) => {
       // Tạo text random và lưu vào db
       let listTextRandom = [];
       for (let i = 0; i <= 5; i++) {
-        listTextRandom[i] = Math.random().toString(36).substring(2, 8);
+        listTextRandom[i] = generateRandomString();
       }
       await editUserDb({
         _id: user._id,
@@ -66,8 +67,6 @@ const route = (app) => {
       for (let i = 0; i <= 5; i++) {
         await waterMark(listImages[i], listTextRandomRSA[i]);
       }
-      // let stringRandom = await deWaterMark("image_1.jpg");
-      // console.log(stringRandom);
       // Lấy 6 url và 6 text gửi về client
       return res.status(200).json(
         apiResponse({
@@ -156,7 +155,7 @@ const route = (app) => {
 
       let listTextRandom = [];
       for (let i = 0; i <= 5; i++) {
-        listTextRandom[i] = Math.random().toString(36).substring(2, 8);
+        listTextRandom[i] = generateRandomString();
       }
       console.log(listUrlImage);
       const user = await createUserDb({
