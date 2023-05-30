@@ -1,5 +1,6 @@
 const Jimp = require("jimp");
 
+
 // Function to convert string to binary
 function stringToBinary(str) {
   let result = "";
@@ -26,12 +27,12 @@ function embedMessage(image, message) {
       ];
       for (let i = 0; i < 3; i++) {
         if (binaryIndex < binaryMessage.length) {
-          binaryPixel[i] =
-            binaryPixel[i].substring(0, 7) + binaryMessage[binaryIndex];
+          binaryPixel[i] = binaryPixel[i].substring(0, 7) + binaryMessage[binaryIndex];      
           binaryIndex++;
         } else {
           break;
         }
+   
       }
       let newPixel = Jimp.rgbaToInt(
         parseInt(binaryPixel[0], 2),
